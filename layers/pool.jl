@@ -7,6 +7,8 @@ mutable struct Pool <: Layer
 	pool_size :: Tuple{Vararg{Int}}
 end
 
+Pool(pool_size...) = Pool(pool_size)
+
 # mean pooling: combine neuron clusters, discard border
 function pool(a :: Matrix{Float64}, pool_size :: Tuple{Vararg{Int}})
 	indices = cart([1:step:stop for (step, stop) in zip(pool_size, size(a) .- pool_size .+ 1)]...)

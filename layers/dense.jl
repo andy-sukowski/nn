@@ -24,7 +24,7 @@ function Dense(dims :: Pair{Int, Int}, act = σ, act′ = σ′) :: Dense
 		act,
 		act′,
 		Vector{Float64}(undef, dims[1]),
-		rand(dims[2], dims[1]),
+		randn(dims[2], dims[1]),
 		zeros(dims[2]),
 		Vector{Float64}(undef, dims[2]),
 		Matrix{Float64}(undef, dims[2], dims[1]),

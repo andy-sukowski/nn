@@ -25,13 +25,13 @@ function Conv(dims :: Pair{Int, Int}, input_size :: Tuple{Vararg{Int}}, kernel_s
 		act,
 		act′,
 		Vector{Array{Float64}}(undef, dims[1]),
-		[rand(kernel_size...) for y in 1:dims[2], x in 1:dims[1]],
-		[zeros(output_size...) for i in 1:dims[2]],
+		[randn(kernel_size...) for k in 1:dims[2], j in 1:dims[1]],
+		[zeros(output_size...) for k in 1:dims[2]],
 		Vector{Array{Float64}}(undef, dims[2]),
 		Matrix{Array{Float64}}(undef, dims[2], dims[1]),
 		Vector{Array{Float64}}(undef, dims[2]),
-		[Array{Float64}(undef, kernel_size...) for y in 1:dims[2], x in 1:dims[1]],
-		[Array{Float64}(undef, output_size...) for i in 1:dims[2]],
+		[Array{Float64}(undef, kernel_size...) for k in 1:dims[2], j in 1:dims[1]],
+		[Array{Float64}(undef, output_size...) for k in 1:dims[2]],
 	)
 end
 

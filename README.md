@@ -3,10 +3,12 @@
 This is an n-dimensional convolutional neural network, written from
 scratch in Julia. It implements the following [layer types][1]:
 
-* [`Conv(dims, input_size, kernel_size)`][2]: convolutional layer
-* [`Pool(pool_size)`][3]: mean pooling, combine neuron clusters
-* [`Flatten(input_size)`][4]: flatten output of `Conv` to vector
-* [`Dense(dims)`][5]: dense/fully connected layer
+* [`Conv`][2]: convolutional layer
+* [`Pool`][3]: mean pooling, combine neuron clusters
+* [`Flatten`][4]: flatten output of `Conv` to vector
+* [`Dense`][5]: dense/fully connected layer
+
+> :warning: **TODO:** optimization and error handling
 
 ## Usage
 
@@ -24,7 +26,7 @@ layers = [Conv(1 => 2, (28, 28), (5, 5)),
 ```
 
 Then train the network on a data batch of type `Data` (defined in
-[network.jl][6]. The `train!()` function modifies the networks
+[network.jl][6]). The `train!()` function modifies the networks
 parameters based on the average gradient across all data points.
 Optionally, the learning rate `η` can be passed (default `η=1`). The
 function returns the average loss of the network.
@@ -39,13 +41,21 @@ can also be called manually. Have a look at the [examples][7].
 
 ## Gradient equations
 
-![forward propagation equation](./forward.svg)
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="./images/forward.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/forward_inv.svg">
+  <img alt="forward propagation equation" src="./images/forward.svg">
+</picture>
 
 Based on the above equation, one can infer the partial derivatives of
 the biases, kernels and activations with respect to the loss / cost
 using the chain rule.
 
-![derivatives of biases, kernels and activations](./gradient.svg)
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="./images/gradient.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/gradient_inv.svg">
+  <img alt="derivatives of biases, kernels and activations" src="./images/gradient.svg">
+</picture>
 
 [1]: ./layers/
 [2]: ./layers/conv.jl
