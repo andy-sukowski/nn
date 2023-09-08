@@ -5,10 +5,10 @@ include("layers/dense.jl")
 include("layers/flatten.jl")
 include("layers/pool.jl")
 
-# needed for some layer types
-Σ∇clear!(l :: Layer)  = nothing
+# needed for Conv and Dense layers
+Σ∇clear!(l :: Layer) = nothing
 Σ∇update!(l :: Layer, data_len :: Int) = nothing
-Σ∇apply!(l :: Layer, η :: Float64)  = nothing
+Σ∇apply!(l :: Layer, η :: Float64) = nothing
 
 loss(x, y)  = sum((x - y) .^ 2)
 loss′(x, y) = 2 .* (x - y)
@@ -25,7 +25,7 @@ function backprop!(layers :: Vector{<:Layer}, ∇output :: Vector) :: Vector
 end
 
 # data: [(input, expected)], only one batch!
-function train!(layers :: Vector{<:Layer}, data :: Data; η=1 :: Float64) :: Float64
+function train!(layers :: Vector{<:Layer}, data :: Data; η=1.0 :: Float64) :: Float64
 	Σ∇clear!.(layers)
 
 	Σloss = 0

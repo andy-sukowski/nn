@@ -20,18 +20,22 @@ mutable struct Conv <: Layer
 end
 
 function Conv(dims :: Pair{Int, Int}, input_size :: Tuple{Vararg{Int}}, kernel_size :: Tuple{Vararg{Int}}, act = σ, act′ = σ′) :: Conv
+	if length(input_size) != length(kernel_size)
+		throw(DimensionMismatch("input_size and kernel_size must be the same length"))
+	end
+
 	output_size = input_size .- kernel_size .+ 1
 	Conv(
 		act,
 		act′,
-		Vector{Array{Float64}}(undef, dims[1]),
+		[Array{Float64}(undef, input_size...) for j in 1:dims[1]],
 		[randn(kernel_size...) for k in 1:dims[2], j in 1:dims[1]],
 		[zeros(output_size...) for k in 1:dims[2]],
 		Vector{Array{Float64}}(undef, dims[2]),
 		Matrix{Array{Float64}}(undef, dims[2], dims[1]),
 		Vector{Array{Float64}}(undef, dims[2]),
 		[Array{Float64}(undef, kernel_size...) for k in 1:dims[2], j in 1:dims[1]],
-		[Array{Float64}(undef, output_size...) for k in 1:dims[2]],
+		[Array{Float64}(undef, output_size...) for k in 1:dims[2]]
 	)
 end
 
@@ -50,19 +54,27 @@ end
 # full convolution: input padding and 180° kernel rotation
 function full_conv(a :: Array{Float64}, k :: Array{Float64})
 	pad_a = zeros(size(a) .+ 2 .* size(k) .- 2)
-    pad_a[range.(size(k), size(a) .+ size(k) .- 1)...] .= a
+	pad_a[range.(size(k), size(a) .+ size(k) .- 1)...] .= a
 	return xcorr(pad_a, reverse(k))
 end
 
 # forward pass, return output
 function forward!(l :: Conv, input :: Vector{<:Array{Float64}}) :: Vector{<:Array{Float64}}
+	if size.(l.input) != size.(input)
+		throw(DimensionMismatch("dimensions of l.input and input must match"))
+	end
+
 	l.input .= input
-	l.z_maps .= l.biases + sum.(eachrow(xcorr.(reshape(l.input, 1, length(l.input)), l.kernels)))
+	l.z_maps .= l.biases + sum.(eachrow(xcorr.(permutedims(l.input), l.kernels)))
 	return (z_map -> l.act.(z_map)).(l.z_maps)
 end
 
 # l.input is set by forward!()
 function backprop!(l :: Conv, ∇output :: Vector{<:Array{Float64}}) :: Vector{<:Array{Float64}}
+	if size.(l.z_maps) != size.(∇output)
+		throw(DimensionMismatch("dimensions of l.z_maps and ∇output must match"))
+	end
+
 	∇input = [zeros(size(l.input[i])) for i in eachindex(l.input)]
 	∇z_maps = (z_map -> l.act′.(z_map)).(l.z_maps)
 	for k in eachindex(∇output)
@@ -77,13 +89,8 @@ end
 
 # clear average gradient
 function Σ∇clear!(l :: Conv)
-	for i in eachindex(l.Σ∇kernels)
-		l.Σ∇kernels[i] .= 0
-	end
-	for i in eachindex(l.Σ∇biases)
-		l.Σ∇biases[i] .= 0
-	end
-	return nothing
+	fill!.(l.Σ∇kernels, 0)
+	fill!.(l.Σ∇biases, 0)
 end
 
 # update average gradient

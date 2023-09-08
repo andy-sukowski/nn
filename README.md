@@ -8,7 +8,10 @@ scratch in Julia. It implements the following [layer types][1]:
 * [`Flatten`][4]: flatten output of `Conv` to vector
 * [`Dense`][5]: dense/fully connected layer
 
-> :warning: **TODO:** optimization and error handling
+> [!WARNING]\
+> Further optimization and testing with higher-dimensional datasets is
+> needed. Until then, the network is rather slow and unexpected errors
+> might occur.
 
 ## Usage
 
@@ -19,16 +22,18 @@ storing them in a vector.
 include("network.jl")
 
 layers = [Conv(1 => 2, (28, 28), (5, 5)),
-          Pool((2, 2)),
-          Flatten((2, 12, 12)),
-          Dense(144 => 40),
-          Dense(40 => 10)]
+          Pool(2, 2),
+          Conv(2 => 3, (12, 12), (5, 5)),
+          Pool(2, 2),
+          Flatten(3, (4, 4)),
+          Dense(48 => 24),
+          Dense(24 => 10)]
 ```
 
 Then train the network on a data batch of type `Data` (defined in
 [network.jl][6]). The `train!()` function modifies the networks
 parameters based on the average gradient across all data points.
-Optionally, the learning rate `η` can be passed (default `η=1`). The
+Optionally, the learning rate `η` can be passed (default `η=1.0`). The
 function returns the average loss of the network.
 
 ```julia

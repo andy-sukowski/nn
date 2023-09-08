@@ -36,6 +36,10 @@ end
 
 # forward pass, return output
 function forward!(l :: Dense, input :: Vector{Float64}) :: Vector{Float64}
+	if length(l.input) != length(input)
+		throw(DimensionMismatch("dimensions of l.input and input must match"))
+	end
+
 	l.input = input
 	l.zs = l.weights * l.input + l.biases
 	return l.act.(l.zs)
@@ -43,6 +47,10 @@ end
 
 # l.input is set by forward!()
 function backprop!(l :: Dense, ∇output :: Vector{Float64}) :: Vector{Float64}
+	if length(l.zs) != length(∇output)
+		throw(DimensionMismatch("dimensions of l.zs and ∇output must match"))
+	end
+
 	l.∇biases = l.act′.(l.zs) .* ∇output
 	l.∇weights = l.input' .* l.∇biases
 	return l.weights' * l.∇biases
