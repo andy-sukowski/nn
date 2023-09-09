@@ -8,7 +8,7 @@ scratch in Julia. It implements the following [layer types][1]:
 * [`Flatten`][4]: flatten output of `Conv` to vector
 * [`Dense`][5]: dense/fully connected layer
 
-> [!WARNING]\
+> :warning: **Warning**\
 > Further optimization and testing with higher-dimensional datasets is
 > needed. Until then, the network is rather slow and unexpected errors
 > might occur.

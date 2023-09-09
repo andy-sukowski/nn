@@ -7,9 +7,10 @@ ReLU′(x) = x >= 0 ? 1 : 0
 σ′(x) = σ(x) * (1 - σ(x))
 
 # recursive n-fold Cartesian product
-# might switch to Iterators.product() in the future
-cart(x) = x # base case
-cart(xs...) = [vcat(i, j) for i in xs[1], j in cart(xs[2:end]...)]
+cart(x) = Tuple.(x) # base case
+cart(xs...) = [(i, j...) for i in xs[1], j in cart(xs[2:end]...)]
+# alternatively, use Iterators.product():
+# cart = collect ∘ Iterators.product
 
 abstract type Layer end
 

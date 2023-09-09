@@ -28,19 +28,19 @@ function Conv(dims :: Pair{Int, Int}, input_size :: Tuple{Vararg{Int}}, kernel_s
 	Conv(
 		act,
 		act′,
-		[Array{Float64}(undef, input_size...) for j in 1:dims[1]],
-		[randn(kernel_size...) for k in 1:dims[2], j in 1:dims[1]],
-		[zeros(output_size...) for k in 1:dims[2]],
+		[Array{Float64}(undef, input_size...) for _ in 1:dims[1]],
+		[randn(kernel_size...) for _ in 1:dims[2], _ in 1:dims[1]],
+		[zeros(output_size...) for _ in 1:dims[2]],
 		Vector{Array{Float64}}(undef, dims[2]),
 		Matrix{Array{Float64}}(undef, dims[2], dims[1]),
 		Vector{Array{Float64}}(undef, dims[2]),
-		[Array{Float64}(undef, kernel_size...) for k in 1:dims[2], j in 1:dims[1]],
-		[Array{Float64}(undef, output_size...) for k in 1:dims[2]]
+		[Array{Float64}(undef, kernel_size...) for _ in 1:dims[2], _ in 1:dims[1]],
+		[Array{Float64}(undef, output_size...) for _ in 1:dims[2]]
 	)
 end
 
 # return sum of product of kernel and region at certain index
-function apply_kernel(a :: Array{Float64}, k :: Array{Float64}, i :: Array{Int})
+function apply_kernel(a :: Array{Float64}, k :: Array{Float64}, i :: Tuple{Vararg{Int}})
 	region = range.(i, i .+ size(k) .- 1)
 	return sum(a[region...] .* k)
 end
@@ -75,7 +75,7 @@ function backprop!(l :: Conv, ∇output :: Vector{<:Array{Float64}}) :: Vector{<
 		throw(DimensionMismatch("dimensions of l.z_maps and ∇output must match"))
 	end
 
-	∇input = [zeros(size(l.input[i])) for i in eachindex(l.input)]
+	∇input = zeros.(size.(l.input))
 	∇z_maps = (z_map -> l.act′.(z_map)).(l.z_maps)
 	for k in eachindex(∇output)
 		l.∇biases[k] = ∇z_maps[k] .* ∇output[k]
