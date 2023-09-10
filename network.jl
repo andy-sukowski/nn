@@ -6,9 +6,9 @@ include("layers/flatten.jl")
 include("layers/pool.jl")
 
 # needed for Conv and Dense layers
-Σ∇clear!(l :: Layer) = nothing
-Σ∇update!(l :: Layer, data_len :: Int) = nothing
-Σ∇apply!(l :: Layer, η :: Float64) = nothing
+Σ∇clear!(_ :: Layer) = nothing
+Σ∇update!(_ :: Layer, _ :: Int) = nothing
+Σ∇apply!(_ :: Layer, _ :: Float64) = nothing
 
 loss(x, y)  = sum((x - y) .^ 2)
 loss′(x, y) = 2 .* (x - y)

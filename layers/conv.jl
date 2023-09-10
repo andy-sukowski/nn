@@ -1,5 +1,7 @@
 # See LICENSE file for copyright and license details.
 
+import DSP # hopefully just temporary
+
 include("../utils.jl")
 
 # convolutional layer: kernels, biases, gradient
@@ -39,23 +41,34 @@ function Conv(dims :: Pair{Int, Int}, input_size :: Tuple{Vararg{Int}}, kernel_s
 	)
 end
 
-# return sum of product of kernel and region at certain index
-function apply_kernel(a :: Array{Float64}, k :: Array{Float64}, i :: Tuple{Vararg{Int}})
-	region = range.(i, i .+ size(k) .- 1)
-	return sum(a[region...] .* k)
-end
+# # Because my custom xcorr() and full_conv() functions are currently
+# # comparatively slow, I will use DSP.conv(), until I've optimized them.
+#
+# # return sum of product of kernel and region at certain index
+# function apply_kernel(a :: Array{Float64}, k :: Array{Float64}, i :: Tuple{Vararg{Int}})
+# 	region = range.(i, i .+ size(k) .- 1)
+# 	return sum(a[region...] .* k)
+# end
+#
+# # cross-correlation: sliding dot product
+# function xcorr(a :: Array{Float64}, k :: Array{Float64})
+# 	indices = cart(range.(1, size(a) .- size(k) .+ 1)...)
+# 	return apply_kernel.((a,), (k,), indices)
+# end
+#
+# # full convolution: input padding and 180° kernel rotation
+# function full_conv(a :: Array{Float64}, k :: Array{Float64})
+# 	pad_a = zeros(size(a) .+ 2 .* size(k) .- 2)
+# 	pad_a[range.(size(k), size(a) .+ size(k) .- 1)...] .= a
+# 	return xcorr(pad_a, reverse(k))
+# end
 
-# cross-correlation: sliding dot product
+full_conv = DSP.conv
+
+# n-dimensional cross-correlation using DSP.conv
 function xcorr(a :: Array{Float64}, k :: Array{Float64})
-	indices = cart(range.(1, size(a) .- size(k) .+ 1)...)
-	return apply_kernel.((a,), (k,), indices)
-end
-
-# full convolution: input padding and 180° kernel rotation
-function full_conv(a :: Array{Float64}, k :: Array{Float64})
-	pad_a = zeros(size(a) .+ 2 .* size(k) .- 2)
-	pad_a[range.(size(k), size(a) .+ size(k) .- 1)...] .= a
-	return xcorr(pad_a, reverse(k))
+	region = range.(size(k), size(a))
+	return full_conv(a, reverse(k))[region...]
 end
 
 # forward pass, return output
