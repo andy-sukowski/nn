@@ -2,8 +2,6 @@
 
 import DSP # hopefully just temporary
 
-include("../utils.jl")
-
 # convolutional layer: kernels, biases, gradient
 mutable struct Conv <: Layer
 	act       :: Function
@@ -63,6 +61,7 @@ end
 # 	return xcorr(pad_a, reverse(k))
 # end
 
+# full convolution: input padding and 180° kernel rotation
 full_conv = DSP.conv
 
 # n-dimensional cross-correlation using DSP.conv

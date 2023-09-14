@@ -37,7 +37,7 @@ Optionally, the learning rate `η` can be passed (default `η=1.0`). The
 function returns the average loss of the network.
 
 ```julia
-train!(layers, batch, η=10.0)
+train!(layers, batch, η=1.5)
 ```
 
 In order to achieve stochastic gradient descent, the `train!()` function
@@ -53,8 +53,8 @@ can also be called manually. Have a look at the [examples][7].
 </picture>
 
 Based on the above equation, one can infer the partial derivatives of
-the biases, kernels and activations with respect to the loss / cost
-using the chain rule.
+the biases, kernels and activations in a convolutional layer with
+respect to the loss / cost using the chain rule.
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="./images/gradient.svg">

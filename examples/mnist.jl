@@ -25,6 +25,14 @@ batches = copy.(eachcol(reshape(data, batch_size, :)))
 
 Σloss = Vector{Float64}(undef, length(batches))
 @time for i in eachindex(batches)
-	Σloss[i] = train!(layers, batches[i], η=2.0)
+	Σloss[i] = train!(layers, batches[i], η=1.5)
 	@printf "Σloss[%d] = %.12f\n" i Σloss[i]
 end
+
+# load MNIST test dataset
+test_x, test_y = MNIST(split=:test)[:]
+test_inputs = [[Float64.(test_x[:, :, i])] for i in 1:size(test_x, 3)]
+
+matches = argmax.(forward!.((layers,), test_inputs)) .- 1 .== test_y
+accuracy = sum(matches) / length(test_y)
+@printf "\nAccuracy on test dataset: %.12f\n" accuracy

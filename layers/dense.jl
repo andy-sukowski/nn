@@ -1,7 +1,5 @@
 # See LICENSE file for copyright and license details.
 
-include("../utils.jl")
-
 # dense layer: input, gradient
 mutable struct Dense <: Layer
 	act       :: Function

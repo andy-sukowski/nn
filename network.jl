@@ -1,5 +1,11 @@
 # See LICENSE file for copyright and license details.
 
+abstract type Layer end
+
+# batch of data points
+Data = Vector{<:Tuple}
+
+include("utils.jl")
 include("layers/conv.jl")
 include("layers/dense.jl")
 include("layers/flatten.jl")
@@ -12,9 +18,6 @@ include("layers/pool.jl")
 
 loss(x, y)  = sum((x - y) .^ 2)
 loss′(x, y) = 2 .* (x - y)
-
-# batch of data points
-Data = Vector{<:Tuple}
 
 function forward!(layers :: Vector{<:Layer}, input :: Vector) :: Vector
 	return foldl((inp, l) -> forward!(l, inp), [input, layers...])

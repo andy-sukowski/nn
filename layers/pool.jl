@@ -1,7 +1,5 @@
 # See LICENSE file for copyright and license details.
 
-include("../utils.jl")
-
 # pooling layer: pool size
 mutable struct Pool <: Layer
 	pool_size :: Tuple{Vararg{Int}}
