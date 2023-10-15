@@ -2,22 +2,22 @@
 
 # dense layer: input, gradient
 mutable struct Dense <: Layer
-	act       :: Function
-	act′      :: Function
+	act      ::Function
+	act′     ::Function
 
-	input     :: Vector{Float64}
-	weights   :: Matrix{Float64}
-	biases    :: Vector{Float64}
-	zs        :: Vector{Float64}
+	input    ::Vector{Float64}
+	weights  ::Matrix{Float64}
+	biases   ::Vector{Float64}
+	zs       ::Vector{Float64}
 
-	∇weights  :: Matrix{Float64}
-	∇biases   :: Vector{Float64}
+	∇weights ::Matrix{Float64}
+	∇biases  ::Vector{Float64}
 
-	Σ∇weights :: Matrix{Float64}
-	Σ∇biases  :: Vector{Float64}
+	Σ∇weights::Matrix{Float64}
+	Σ∇biases ::Vector{Float64}
 end
 
-function Dense(dims :: Pair{Int, Int}, act = σ, act′ = σ′) :: Dense
+function Dense(dims::Pair{Int, Int}; act = σ, act′ = σ′)::Dense
 	Dense(
 		act,
 		act′,
@@ -33,7 +33,7 @@ function Dense(dims :: Pair{Int, Int}, act = σ, act′ = σ′) :: Dense
 end
 
 # forward pass, return output
-function forward!(l :: Dense, input :: Vector{Float64}) :: Vector{Float64}
+function forward!(l::Dense, input::Vector{Float64})::Vector{Float64}
 	if length(l.input) != length(input)
 		throw(DimensionMismatch("dimensions of l.input and input must match"))
 	end
@@ -44,7 +44,7 @@ function forward!(l :: Dense, input :: Vector{Float64}) :: Vector{Float64}
 end
 
 # l.input is set by forward!()
-function backprop!(l :: Dense, ∇output :: Vector{Float64}) :: Vector{Float64}
+function backprop!(l::Dense, ∇output::Vector{Float64})::Vector{Float64}
 	if length(l.zs) != length(∇output)
 		throw(DimensionMismatch("dimensions of l.zs and ∇output must match"))
 	end
@@ -55,21 +55,21 @@ function backprop!(l :: Dense, ∇output :: Vector{Float64}) :: Vector{Float64}
 end
 
 # clear average gradient
-function Σ∇clear!(l :: Dense)
+function Σ∇clear!(l::Dense)
 	l.Σ∇weights .= 0
 	l.Σ∇biases  .= 0
 	return nothing
 end
 
 # update average gradient
-function Σ∇update!(l :: Dense, data_len :: Int)
+function Σ∇update!(l::Dense, data_len::Int)
 	l.Σ∇weights += l.∇weights / data_len
 	l.Σ∇biases  += l.∇biases  / data_len
 	return nothing
 end
 
 # apply average gradient
-function Σ∇apply!(l :: Dense, η :: Float64)
+function Σ∇apply!(l::Dense, η::Float64)
 	l.weights -= η * l.Σ∇weights
 	l.biases  -= η * l.Σ∇biases
 	return nothing

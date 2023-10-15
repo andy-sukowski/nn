@@ -1,10 +1,20 @@
 # See LICENSE file for copyright and license details.
 
-ReLU(x)  = max(0, x)
-ReLU′(x) = x >= 0 ? 1 : 0
+# Rectified Linear Unit (ReLU)
+relu(x)  = max(0, x)
+relu′(x) = x < 0 ? 0 : 1
 
+# leaky ReLU to avoid dead neurons
+lrelu(x)  = max(0.01, x)
+lrelu′(x) = x < 0 ? 0.01 : 1
+
+# sigmoid
 σ(x)  = 1 / (1 + exp(-x))
 σ′(x) = σ(x) * (1 - σ(x))
+
+# hyperbolic tangent
+tanh(x)  = (exp(x) - exp(-x)) / (exp(x) + exp(-x))
+tanh′(x) = 1 - tanh(x)^2
 
 # recursive n-fold Cartesian product
 # cart(x) = Tuple.(x) # base case
@@ -12,7 +22,7 @@ ReLU′(x) = x >= 0 ? 1 : 0
 # alternatively, use Iterators.product():
 cart = collect ∘ Iterators.product
 
-function one_hot(d :: Int, n :: Int) :: Vector{Int}
+function one_hot(d::Int, n::Int)::Vector{Int}
 	out = zeros(n)
 	out[d] = 1
 	return out

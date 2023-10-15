@@ -19,7 +19,7 @@ First, initialize the neural network by chaining different layers and
 storing them in a vector.
 
 ```julia
-include("network.jl")
+include("cnn.jl")
 
 layers = [Conv(1 => 2, (28, 28), (5, 5)),
           Pool(2, 2),
@@ -31,7 +31,7 @@ layers = [Conv(1 => 2, (28, 28), (5, 5)),
 ```
 
 Then train the network on a data batch of type `Data` (defined in
-[network.jl][6]). The `train!()` function modifies the networks
+[cnn.jl][6]). The `train!()` function modifies the networks
 parameters based on the average gradient across all data points.
 Optionally, the learning rate `η` can be passed (default `η=1.0`). The
 function returns the average loss of the network.
@@ -67,5 +67,5 @@ respect to the loss / cost using the chain rule.
 [3]: ./layers/pool.jl
 [4]: ./layers/flatten.jl
 [5]: ./layers/dense.jl
-[6]: ./network.jl
+[6]: ./cnn.jl
 [7]: ./examples/

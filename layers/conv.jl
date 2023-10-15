@@ -4,26 +4,22 @@ import DSP # hopefully just temporary
 
 # convolutional layer: kernels, biases, gradient
 mutable struct Conv <: Layer
-	act       :: Function
-	act′      :: Function
+	act      ::Function
+	act′     ::Function
 
-	input     :: Vector{<:Array{Float64}}
-	kernels   :: Matrix{Array{Float64}}
-	biases    :: Vector{Array{Float64}}
-	z_maps    :: Vector{Array{Float64}}
+	input    ::Vector{<:Array{Float64}}
+	kernels  ::Matrix{Array{Float64}}
+	biases   ::Vector{Array{Float64}}
+	z_maps   ::Vector{Array{Float64}}
 
-	∇kernels  :: Matrix{Array{Float64}}
-	∇biases   :: Vector{Array{Float64}}
+	∇kernels ::Matrix{Array{Float64}}
+	∇biases  ::Vector{Array{Float64}}
 
-	Σ∇kernels :: Matrix{Array{Float64}}
-	Σ∇biases  :: Vector{Array{Float64}}
+	Σ∇kernels::Matrix{Array{Float64}}
+	Σ∇biases ::Vector{Array{Float64}}
 end
 
-function Conv(dims :: Pair{Int, Int}, input_size :: Tuple{Vararg{Int}}, kernel_size :: Tuple{Vararg{Int}}, act = σ, act′ = σ′) :: Conv
-	if length(input_size) != length(kernel_size)
-		throw(DimensionMismatch("input_size and kernel_size must be the same length"))
-	end
-
+function Conv(dims::Pair{Int, Int}, input_size::NTuple{N, Int}, kernel_size::NTuple{N, Int}; act = σ, act′ = σ′)::Conv where {N}
 	output_size = input_size .- kernel_size .+ 1
 	Conv(
 		act,
@@ -43,19 +39,19 @@ end
 # # comparatively slow, I will use DSP.conv(), until I've optimized them.
 #
 # # return sum of product of kernel and region at certain index
-# function apply_kernel(a :: Array{Float64}, k :: Array{Float64}, i :: Tuple{Vararg{Int}})
+# function apply_kernel(a::Array{Float64}, k::Array{Float64}, i::Tuple{Vararg{Int}})
 # 	region = range.(i, i .+ size(k) .- 1)
 # 	return sum(a[region...] .* k)
 # end
 #
 # # cross-correlation: sliding dot product
-# function xcorr(a :: Array{Float64}, k :: Array{Float64})
+# function xcorr(a::Array{Float64}, k::Array{Float64})
 # 	indices = cart(range.(1, size(a) .- size(k) .+ 1)...)
 # 	return apply_kernel.((a,), (k,), indices)
 # end
 #
 # # full convolution: input padding and 180° kernel rotation
-# function full_conv(a :: Array{Float64}, k :: Array{Float64})
+# function full_conv(a::Array{Float64}, k::Array{Float64})
 # 	pad_a = zeros(size(a) .+ 2 .* size(k) .- 2)
 # 	pad_a[range.(size(k), size(a) .+ size(k) .- 1)...] .= a
 # 	return xcorr(pad_a, reverse(k))
@@ -65,13 +61,13 @@ end
 full_conv = DSP.conv
 
 # n-dimensional cross-correlation using DSP.conv
-function xcorr(a :: Array{Float64}, k :: Array{Float64})
+function xcorr(a::Array{Float64}, k::Array{Float64})
 	region = range.(size(k), size(a))
-	return full_conv(a, reverse(k))[region...]
+	return DSP.conv(a, reverse(k))[region...]
 end
 
 # forward pass, return output
-function forward!(l :: Conv, input :: Vector{<:Array{Float64}}) :: Vector{<:Array{Float64}}
+function forward!(l::Conv, input::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
 	if size.(l.input) != size.(input)
 		throw(DimensionMismatch("dimensions of l.input and input must match"))
 	end
@@ -82,7 +78,7 @@ function forward!(l :: Conv, input :: Vector{<:Array{Float64}}) :: Vector{<:Arra
 end
 
 # l.input is set by forward!()
-function backprop!(l :: Conv, ∇output :: Vector{<:Array{Float64}}) :: Vector{<:Array{Float64}}
+function backprop!(l::Conv, ∇output::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
 	if size.(l.z_maps) != size.(∇output)
 		throw(DimensionMismatch("dimensions of l.z_maps and ∇output must match"))
 	end
@@ -100,20 +96,20 @@ function backprop!(l :: Conv, ∇output :: Vector{<:Array{Float64}}) :: Vector{<
 end
 
 # clear average gradient
-function Σ∇clear!(l :: Conv)
+function Σ∇clear!(l::Conv)
 	fill!.(l.Σ∇kernels, 0)
 	fill!.(l.Σ∇biases, 0)
 end
 
 # update average gradient
-function Σ∇update!(l :: Conv, data_len :: Int)
+function Σ∇update!(l::Conv, data_len::Int)
 	l.Σ∇kernels += l.∇kernels / data_len
 	l.Σ∇biases  += l.∇biases  / data_len
 	return nothing
 end
 
 # apply average gradient
-function Σ∇apply!(l :: Conv, η :: Float64)
+function Σ∇apply!(l::Conv, η::Float64)
 	l.kernels -= η * l.Σ∇kernels
 	l.biases  -= η * l.Σ∇biases
 	return nothing
