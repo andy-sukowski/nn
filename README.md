@@ -1,17 +1,18 @@
-# cnn - convolutional neural network
+# Neural Network Library
 
-This is an n-dimensional convolutional neural network, written from
-scratch in Julia. It implements the following [layer types][1]:
+A small, extensible neural network library, written from scratch in
+Julia, that makes it very easy to define and train models consisting of
+the following [layer types][1]:
 
-* [`Conv`][2]: convolutional layer
+* [`Conv`][2]: n-dimensional convolutional layer
 * [`Pool`][3]: mean pooling, combine neuron clusters
 * [`Flatten`][4]: flatten output of `Conv` to vector
 * [`Dense`][5]: dense/fully connected layer
 
 > :warning: **Warning**\
-> Further optimization and testing with higher-dimensional datasets is
-> needed. Until then, the network is rather slow and unexpected errors
-> might occur.
+> Further optimization and testing of the convolutional layer type with
+> higher-dimensional datasets is needed. Until then, the network is
+> rather slow and unexpected errors might occur.
 
 ## Usage
 
@@ -19,7 +20,7 @@ First, initialize the neural network by chaining different layers and
 storing them in a vector.
 
 ```julia
-include("cnn.jl")
+include("nn.jl")
 
 layers = [Conv(1 => 2, (28, 28), (5, 5)),
           Pool(2, 2),
@@ -31,10 +32,10 @@ layers = [Conv(1 => 2, (28, 28), (5, 5)),
 ```
 
 Then train the network on a data batch of type `Data` (defined in
-[cnn.jl][6]). The `train!()` function modifies the networks
-parameters based on the average gradient across all data points.
-Optionally, the learning rate `η` can be passed (default `η=1.0`). The
-function returns the average loss of the network.
+[nn.jl][6]). The `train!()` function modifies the networks parameters
+based on the average gradient across all data points. Optionally, the
+learning rate `η` can be passed (default `η=1.0`). The function returns
+the average loss of the network.
 
 ```julia
 train!(layers, batch, η=1.5)
@@ -44,7 +45,11 @@ In order to achieve stochastic gradient descent, the `train!()` function
 can be called from a `for`-loop. The `forward!()` and `loss()` function
 can also be called manually. Have a look at the [examples][7].
 
-## Gradient equations
+## Convolutional forward pass and gradient
+
+The forward pass and gradient equations of fully connected (dense)
+layers are available in my [Multilayer Perceptron (MLP) repository][8].
+And the forward pass of a convolutional layer is defined by this equation:
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="./images/forward.svg">
@@ -67,5 +72,6 @@ respect to the loss / cost using the chain rule.
 [3]: ./layers/pool.jl
 [4]: ./layers/flatten.jl
 [5]: ./layers/dense.jl
-[6]: ./cnn.jl
+[6]: ./nn.jl
 [7]: ./examples/
+[8]: https://git.andy-sb.com/mlp

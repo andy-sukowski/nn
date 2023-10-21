@@ -38,7 +38,7 @@ function forward!(l::Dense, input::Vector{Float64})::Vector{Float64}
 		throw(DimensionMismatch("dimensions of l.input and input must match"))
 	end
 
-	l.input = input
+	l.input = input # used by backprop!()
 	l.zs = l.weights * l.input + l.biases
 	return l.act.(l.zs)
 end
