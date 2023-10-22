@@ -9,6 +9,7 @@ include("utils.jl")
 include("layers/conv.jl")
 include("layers/dense.jl")
 include("layers/flatten.jl")
+include("layers/lstm.jl")
 include("layers/pool.jl")
 
 # needed for Conv and Dense layers
