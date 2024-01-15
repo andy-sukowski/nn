@@ -7,8 +7,7 @@ end
 
 Flatten(len, input_size...) = Flatten(len, input_size)
 
-# no side-effects, but named forward!() for consistency
-function forward!(l::Flatten, input::Vector{<:Array{Float64}})::Vector{Float64}
+function forward(l::Flatten, input::Vector{<:Array{Float64}})::Vector{Float64}
 	if l.len != length(input) || l.input_size != size(input[1])
 		throw(DimensionMismatch("dimensions of the layer and input must match"))
 	end
@@ -17,8 +16,7 @@ function forward!(l::Flatten, input::Vector{<:Array{Float64}})::Vector{Float64}
 	return vec(a)
 end
 
-# no side-effects, but named backprop!() for consistency
-function backprop!(l::Flatten, ∇output::Vector{Float64})::Vector{Array{Float64}}
+function backprop(l::Flatten, ∇output::Vector{Float64})::Vector{Array{Float64}}
 	if l.len * prod(l.input_size) != length(∇output)
 		throw(DimensionMismatch("dimensions of the layer and ∇output must match"))
 	end
@@ -26,3 +24,7 @@ function backprop!(l::Flatten, ∇output::Vector{Float64})::Vector{Array{Float64
 	a = reshape(∇output', l.len, l.input_size...)
 	return [copy.(eachslice(a, dims=1))...]
 end
+
+# for multiple dispatch, no side-effects, but named forward!(), backprop!() for consistency
+forward!( l::Flatten, input::Vector{<:Array{Float64}}; t=1::Int)::Vector{Float64}        = forward( l, input)
+backprop!(l::Flatten, ∇output::Vector{Float64};        t=1::Int)::Vector{Array{Float64}} = backprop(l, ∇output)

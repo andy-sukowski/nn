@@ -2,34 +2,34 @@
 
 import DSP # hopefully just temporary
 
-# convolutional layer: kernels, biases, gradient
+# convolutional layer with BPTT support: kernels, biases, gradient
 mutable struct Conv <: Layer
 	act      ::Function
 	act′     ::Function
 
-	input    ::Vector{<:Array{Float64}}
+	input    ::Vector{Vector{<:Array{Float64}}} # BPTT
 	kernels  ::Matrix{Array{Float64}}
 	biases   ::Vector{Array{Float64}}
-	z_maps   ::Vector{Array{Float64}}
+	z_maps   ::Vector{Vector{Array{Float64}}}   # BPTT
 
-	∇kernels ::Matrix{Array{Float64}}
-	∇biases  ::Vector{Array{Float64}}
+	∇kernels ::Vector{Matrix{Array{Float64}}}   # BPTT
+	∇biases  ::Vector{Vector{Array{Float64}}}   # BPTT
 
 	Σ∇kernels::Matrix{Array{Float64}}
 	Σ∇biases ::Vector{Array{Float64}}
 end
 
-function Conv(dims::Pair{Int, Int}, input_size::NTuple{N, Int}, kernel_size::NTuple{N, Int}; act = σ, act′ = σ′)::Conv where {N}
+function Conv(dims::Pair{Int, Int}, input_size::NTuple{N, Int}, kernel_size::NTuple{N, Int}; act=σ, act′=σ′, t=1::Int)::Conv where {N}
 	output_size = input_size .- kernel_size .+ 1
 	Conv(
 		act,
 		act′,
-		[Array{Float64}(undef, input_size...) for _ in 1:dims[1]],
+		[[Array{Float64}(undef, input_size...) for _ in 1:dims[1]] for _ in 1:t],
 		[randn(kernel_size...) for _ in 1:dims[2], _ in 1:dims[1]],
 		[zeros(output_size...) for _ in 1:dims[2]],
-		Vector{Array{Float64}}(undef, dims[2]),
-		Matrix{Array{Float64}}(undef, dims[2], dims[1]),
-		Vector{Array{Float64}}(undef, dims[2]),
+		[Vector{Array{Float64}}(undef, dims[2])                    for _ in 1:t],
+		[Matrix{Array{Float64}}(undef, dims[2], dims[1])           for _ in 1:t],
+		[Vector{Array{Float64}}(undef, dims[2])                    for _ in 1:t],
 		[Array{Float64}(undef, kernel_size...) for _ in 1:dims[2], _ in 1:dims[1]],
 		[Array{Float64}(undef, output_size...) for _ in 1:dims[2]]
 	)
@@ -67,28 +67,29 @@ function xcorr(a::Array{Float64}, k::Array{Float64})
 end
 
 # forward pass, return output
-function forward!(l::Conv, input::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
-	if size.(l.input) != size.(input)
-		throw(DimensionMismatch("dimensions of l.input and input must match"))
+function forward!(l::Conv, input::Vector{<:Array{Float64}}; t=1::Int)::Vector{<:Array{Float64}}
+	if size.(l.input[t]) != size.(input)
+		throw(DimensionMismatch("dimensions of l.input[t] and input must match"))
 	end
 
-	l.input .= input
-	l.z_maps .= l.biases + sum.(eachrow(xcorr.(permutedims(l.input), l.kernels)))
-	return (z_map -> l.act.(z_map)).(l.z_maps)
+	# l.input and l.z_maps used by backprop!()
+	l.input[t]  .= input
+	l.z_maps[t] .= l.biases + sum.(eachrow(xcorr.(permutedims(l.input[t]), l.kernels)))
+	return (z_map -> l.act.(z_map)).(l.z_maps[t])
 end
 
-# l.input is set by forward!()
-function backprop!(l::Conv, ∇output::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
-	if size.(l.z_maps) != size.(∇output)
-		throw(DimensionMismatch("dimensions of l.z_maps and ∇output must match"))
+# l.input and l.z_maps set by forward!()
+function backprop!(l::Conv, ∇output::Vector{<:Array{Float64}}; t=1::Int)::Vector{<:Array{Float64}}
+	if size.(l.z_maps[t]) != size.(∇output)
+		throw(DimensionMismatch("dimensions of l.z_maps[t] and ∇output must match"))
 	end
 
-	∇input = zeros.(size.(l.input))
-	∇z_maps = (z_map -> l.act′.(z_map)).(l.z_maps)
+	∇input  = zeros.(size.(l.input[t]))
+	∇z_maps = (z_map -> l.act′.(z_map)).(l.z_maps[t])
 	for k in eachindex(∇output)
-		l.∇biases[k] = ∇z_maps[k] .* ∇output[k]
-		for j in eachindex(l.input)
-			l.∇kernels[k, j] = xcorr(l.input[j], ∇z_maps[k] .* ∇output[k])
+		l.∇biases[t][k] = ∇z_maps[k] .* ∇output[k]
+		for j in eachindex(l.input[t])
+			l.∇kernels[t][k, j] = xcorr(l.input[t][j], ∇z_maps[k] .* ∇output[k])
 			∇input[j] += full_conv(∇z_maps[k] .* ∇output[k], l.kernels[k, j])
 		end
 	end
@@ -103,8 +104,8 @@ end
 
 # update average gradient
 function Σ∇update!(l::Conv, data_len::Int)
-	l.Σ∇kernels += l.∇kernels / data_len
-	l.Σ∇biases  += l.∇biases  / data_len
+	l.Σ∇kernels += sum(l.∇kernels) / data_len
+	l.Σ∇biases  += sum(l.∇biases)  / data_len
 	return nothing
 end
 
