@@ -14,18 +14,23 @@ mutable struct LSTM <: Layer
 
 	cell_state       ::Vector{Vector{Float64}}
 	hidden_state     ::Vector{Vector{Float64}}
+
+	∇cell_state      ::Vector{Vector{Float64}}
+	∇hidden_state    ::Vector{Vector{Float64}}
 end
 
 function LSTM(dims::Pair{Int, Int}; t::Int)::LSTM
 	return LSTM(
-		Dense(sum(dims) => dims[2]; act=σ, act′=σ′),
-		Dense(sum(dims) => dims[2]; act=σ, act′=σ′),
-		Dense(sum(dims) => dims[2]; act=σ, act′=σ′),
-		Dense(sum(dims) => dims[2]; act=tanh, act′=tanh′),
+		Dense(sum(dims) => dims[2]; act=σ,    act′=σ′,    t=t),
+		Dense(sum(dims) => dims[2]; act=σ,    act′=σ′,    t=t),
+		Dense(sum(dims) => dims[2]; act=σ,    act′=σ′,    t=t),
+		Dense(sum(dims) => dims[2]; act=tanh, act′=tanh′, t=t),
 		[Vector{Float64}(undef, dims[2]) for _ in 1:t],
 		[Vector{Float64}(undef, dims[2]) for _ in 1:t],
 		[Vector{Float64}(undef, dims[2]) for _ in 1:t],
 		[Vector{Float64}(undef, dims[2]) for _ in 1:t],
+		[zeros(dims[2]) for _ in 1:t+1],
+		[zeros(dims[2]) for _ in 1:t+1],
 		[zeros(dims[2]) for _ in 1:t+1],
 		[zeros(dims[2]) for _ in 1:t+1]
 	)
@@ -33,14 +38,39 @@ end
 
 # forward pass of LSTM cell, return hidden state as output
 function forward!(l::LSTM, input::Vector{Float64}; t::Int)::Vector{Float64}
-	input_concat = [input; l.hidden_state[t]]
+	if t == 1 # reset derivatives
+		l.∇cell_state[end]   .= 0
+		l.∇hidden_state[end] .= 0
+	end
 
-	l.forget_gate_out[t]   = forward!(l.forget_gate,   input_concat)
-	l.input_gate_out[t]    = forward!(l.input_gate,    input_concat)
-	l.output_gate_out[t]   = forward!(l.output_gate,   input_concat)
-	l.new_candidate_out[t] = forward!(l.new_candidate, input_concat)
+	input_concat = [l.hidden_state[t]; input]
+
+	l.forget_gate_out[t]   = forward!(l.forget_gate,   input_concat; t=t)
+	l.input_gate_out[t]    = forward!(l.input_gate,    input_concat; t=t)
+	l.output_gate_out[t]   = forward!(l.output_gate,   input_concat; t=t)
+	l.new_candidate_out[t] = forward!(l.new_candidate, input_concat; t=t)
 
 	l.cell_state[t+1]   = l.forget_gate_out[t] .* l.cell_state[t] + l.input_gate_out[t] .* l.new_candidate_out[t]
 	l.hidden_state[t+1] = l.output_gate_out[t] .* tanh.(l.cell_state[t+1])
 	return l.hidden_state[t+1]
+end
+
+# backpropagation of LSTM cell, return input gradient
+function backprop!(l::LSTM, ∇output::Vector{Float64}; t::Int)::Vector{Float64}
+	l.∇hidden_state[t+1] += ∇output
+	l.∇cell_state[t+1]   += l.∇hidden_state[t+1] .* l.output_gate_out[t] .* tanh′.(l.cell_state[t+1])
+	l.∇cell_state[t]      = l.∇cell_state[t+1]   .* l.forget_gate_out[t]
+
+	∇forget_gate_out   = l.∇cell_state[t+1]   .* l.cell_state[t]
+	∇input_gate_out    = l.∇cell_state[t+1]   .* l.new_candidate_out[t]
+	∇output_gate_out   = l.∇hidden_state[t+1] .* tanh.(l.cell_state[t+1])
+	∇new_candidate_out = l.∇cell_state[t+1]   .* l.input_gate_out[t]
+
+	∇input_concat = backprop!(l.forget_gate,   ∇forget_gate_out;   t=t)
+	              + backprop!(l.input_gate,    ∇input_gate_out;    t=t)
+	              + backprop!(l.output_gate,   ∇output_gate_out;   t=t)
+	              + backprop!(l.new_candidate, ∇new_candidate_out; t=t)
+
+	l.∇hidden_state[t] = ∇input_concat[1:length(l.∇hidden_state[t])]
+	return ∇input_concat[length(l.∇hidden_state[t])+1:end]
 end
