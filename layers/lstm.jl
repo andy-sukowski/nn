@@ -74,3 +74,36 @@ function backprop!(l::LSTM, ∇output::Vector{Float64}; t::Int)::Vector{Float64}
 	l.∇hidden_state[t] = ∇input_concat[1:length(l.∇hidden_state[t])]
 	return ∇input_concat[length(l.∇hidden_state[t])+1:end]
 end
+
+# clear average gradient
+function Σ∇clear!(l::LSTM)
+	Σ∇clear!.([
+		l.forget_gate,
+		l.input_gate,
+		l.output_gate,
+		l.new_candidate
+	])
+	return nothing
+end
+
+# update average gradient
+function Σ∇update!(l::LSTM, data_len::Int)
+	Σ∇update!.([
+		l.forget_gate,
+		l.input_gate,
+		l.output_gate,
+		l.new_candidate
+	], data_len)
+	return nothing
+end
+
+# apply average gradient
+function Σ∇apply!(l::LSTM, η::Float64)
+	Σ∇apply!.([
+		l.forget_gate,
+		l.input_gate,
+		l.output_gate,
+		l.new_candidate
+	], η)
+	return nothing
+end
