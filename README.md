@@ -8,6 +8,7 @@ the following [layer types][1]:
 * [`Pool`][3]: mean pooling, combine neuron clusters
 * [`Flatten`][4]: flatten output of `Conv` to vector
 * [`Dense`][5]: dense/fully connected layer
+* [`LSTM`][6]: long short-term memory cell
 
 > :warning: **Warning**\
 > Further optimization and testing of the convolutional layer type with
@@ -32,7 +33,7 @@ layers = [Conv(1 => 2, (28, 28), (5, 5)),
 ```
 
 Then train the network on a data batch of type `Data` (defined in
-[nn.jl][6]). The `train!()` function modifies the networks parameters
+[nn.jl][7]). The `train!()` function modifies the networks parameters
 based on the average gradient across all data points. Optionally, the
 learning rate `η` can be passed (default `η=1.0`). The function returns
 the average loss of the network.
@@ -43,12 +44,17 @@ train!(layers, batch, η=1.5)
 
 In order to achieve stochastic gradient descent, the `train!()` function
 can be called from a `for`-loop. The `forward!()` and `loss()` function
-can also be called manually. Have a look at the [examples][7].
+can also be called manually. Have a look at the [examples][8].
+
+> **Note**\
+> `train_seq!()`, `forward_seq!()` and `backprop_seq!()` are currently
+> used for sequential datasets. However, I plan to improve the
+> interface, as `train()!` and `train_seq!()` appear almost identical.
 
 ## Convolutional forward pass and gradient
 
 The forward pass and gradient equations of fully connected (dense)
-layers are available in my [Multilayer Perceptron (MLP) repository][8].
+layers are available in my [Multilayer Perceptron (MLP) repository][9].
 And the forward pass of a convolutional layer is defined by this equation:
 
 <picture>
@@ -72,6 +78,7 @@ respect to the loss / cost using the chain rule.
 [3]: ./layers/pool.jl
 [4]: ./layers/flatten.jl
 [5]: ./layers/dense.jl
-[6]: ./nn.jl
-[7]: ./examples/
-[8]: https://git.andy-sb.com/mlp
+[6]: ./layers/lstm.jl
+[7]: ./nn.jl
+[8]: ./examples/
+[9]: https://git.andy-sb.com/mlp
