@@ -14,13 +14,11 @@ function pool(a::Matrix{Float64}, pool_size::Tuple{Vararg{Int}})::Matrix{Float64
 	return sums ./ prod(pool_size)
 end
 
-# no side-effects, but named forward!() for consistency
-function forward!(l::Pool, input::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
+function forward(l::Pool, input::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
 	return pool.(input, (l.pool_size,))
 end
 
-# no side-effects, but named backprop!() for consistency, also kinda ugly
-function backprop!(l::Pool, ∇output::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
+function backprop(l::Pool, ∇output::Vector{<:Array{Float64}})::Vector{<:Array{Float64}}
 	∇input = fill(zeros(size(∇output[1]) .* l.pool_size), length(∇output))
 	indices = cart(range.(1, size(∇input[1]))...)
 	for i in eachindex(∇input), j in indices
@@ -28,3 +26,7 @@ function backprop!(l::Pool, ∇output::Vector{<:Array{Float64}})::Vector{<:Array
 	end
 	return ∇input
 end
+
+# for multiple dispatch, no side-effects, but named forward!(), backprop!() for consistency
+forward!( l::Pool, input::Vector{<:Array{Float64}};   t=1::Int)::Vector{Array{Float64}} = forward( l, input)
+backprop!(l::Pool, ∇output::Vector{<:Array{Float64}}; t=1::Int)::Vector{Array{Float64}} = backprop(l, ∇output)
