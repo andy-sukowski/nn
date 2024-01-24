@@ -1,8 +1,8 @@
 # See LICENSE file for copyright and license details.
 
 # pooling layer: pool size
-mutable struct Pool <: Layer
-	pool_size::Tuple{Vararg{Int}}
+mutable struct Pool{N} <: Layer
+	pool_size::NTuple{N, Int}
 end
 
 Pool(pool_size...) = Pool(pool_size)

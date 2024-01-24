@@ -3,25 +3,25 @@
 import DSP # hopefully just temporary
 
 # convolutional layer with BPTT support: kernels, biases, gradient
-mutable struct Conv <: Layer
+mutable struct Conv{N} <: Layer
 	act      ::Function
 	act′     ::Function
 
-	input    ::Vector{Vector{<:Array{Float64}}} # BPTT
-	kernels  ::Matrix{Array{Float64}}
-	biases   ::Vector{Array{Float64}}
-	z_maps   ::Vector{Vector{Array{Float64}}}   # BPTT
+	input    ::Vector{Vector{Array{Float64, N}}} # BPTT
+	kernels  ::Matrix{Array{Float64, N}}
+	biases   ::Vector{Array{Float64, N}}
+	z_maps   ::Vector{Vector{Array{Float64, N}}} # BPTT
 
-	∇kernels ::Vector{Matrix{Array{Float64}}}   # BPTT
-	∇biases  ::Vector{Vector{Array{Float64}}}   # BPTT
+	∇kernels ::Vector{Matrix{Array{Float64, N}}} # BPTT
+	∇biases  ::Vector{Vector{Array{Float64, N}}} # BPTT
 
-	Σ∇kernels::Matrix{Array{Float64}}
-	Σ∇biases ::Vector{Array{Float64}}
+	Σ∇kernels::Matrix{Array{Float64, N}}
+	Σ∇biases ::Vector{Array{Float64, N}}
 end
 
 function Conv(dims::Pair{Int, Int}, input_size::NTuple{N, Int}, kernel_size::NTuple{N, Int}; act=σ, act′=σ′, t=1::Int)::Conv where {N}
 	output_size = input_size .- kernel_size .+ 1
-	Conv(
+	Conv{N}(
 		act,
 		act′,
 		[[Array{Float64}(undef, input_size...) for _ in 1:dims[1]] for _ in 1:t],

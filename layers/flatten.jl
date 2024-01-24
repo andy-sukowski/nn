@@ -1,8 +1,8 @@
 # See LICENSE file for copyright and license details.
 
-mutable struct Flatten <: Layer
+mutable struct Flatten{N} <: Layer
 	len::Int
-	input_size::Tuple{Vararg{Int}}
+	input_size::NTuple{N, Int}
 end
 
 Flatten(len, input_size...) = Flatten(len, input_size)

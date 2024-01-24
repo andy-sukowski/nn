@@ -4,7 +4,7 @@ using Printf
 using MLDatasets: MNIST
 using ProgressMeter
 
-include("../cnn.jl")
+include("../nn.jl")
 
 layers = [Conv(1 => 2, (28, 28), (5, 5)),
           Pool(2, 2),
