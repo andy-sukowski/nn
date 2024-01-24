@@ -2,23 +2,23 @@
 
 # dense layer with BPTT support: input, gradient
 mutable struct Dense <: Layer
-	act      ::Function
-	act′     ::Function
+	act        ::Function
+	act′       ::Function
 
-	input    ::Vector{Vector{Float64}} # BPTT
-	weights  ::Matrix{Float64}
-	biases   ::Vector{Float64}
-	zs       ::Vector{Vector{Float64}} # BPTT
+	input      ::Vector{Vector{Float64}} # BPTT
+	weights    ::Matrix{Float64}
+	biases     ::Vector{Float64}
+	zs         ::Vector{Vector{Float64}} # BPTT
 
-	∇weights ::Vector{Matrix{Float64}} # BPTT
-	∇biases  ::Vector{Vector{Float64}} # BPTT
+	∇weights   ::Vector{Matrix{Float64}} # BPTT
+	∇biases    ::Vector{Vector{Float64}} # BPTT
 
-	Σ∇weights::Matrix{Float64}
-	Σ∇biases ::Vector{Float64}
+	avg∇weights::Matrix{Float64}
+	avg∇biases ::Vector{Float64}
 end
 
 function Dense(dims::Pair{Int, Int}; act=σ, act′=σ′, t=1::Int)::Dense
-	Dense(
+	return Dense(
 		act,
 		act′,
 		[Vector{Float64}(undef, dims[1])          for _ in 1:t],
@@ -56,22 +56,22 @@ function backprop!(l::Dense, ∇output::Vector{Float64}; t=1::Int)::Vector{Float
 end
 
 # clear average gradient
-function Σ∇clear!(l::Dense)
-	l.Σ∇weights .= 0
-	l.Σ∇biases  .= 0
+function avg∇clear!(l::Dense)
+	l.avg∇weights .= 0
+	l.avg∇biases  .= 0
 	return nothing
 end
 
 # update average gradient
-function Σ∇update!(l::Dense, data_len::Int)
-	l.Σ∇weights += sum(l.∇weights) / data_len
-	l.Σ∇biases  += sum(l.∇biases)  / data_len
+function avg∇update!(l::Dense, data_len::Int)
+	l.avg∇weights += sum(l.∇weights) / data_len
+	l.avg∇biases  += sum(l.∇biases)  / data_len
 	return nothing
 end
 
 # apply average gradient
-function Σ∇apply!(l::Dense, η::Float64)
-	l.weights -= η * l.Σ∇weights
-	l.biases  -= η * l.Σ∇biases
+function avg∇apply!(l::Dense, η::Float64)
+	l.weights -= η * l.avg∇weights
+	l.biases  -= η * l.avg∇biases
 	return nothing
 end

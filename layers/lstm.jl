@@ -76,8 +76,8 @@ function backprop!(l::LSTM, ∇output::Vector{Float64}; t::Int)::Vector{Float64}
 end
 
 # clear average gradient
-function Σ∇clear!(l::LSTM)
-	Σ∇clear!.([
+function avg∇clear!(l::LSTM)
+	avg∇clear!.([
 		l.forget_gate,
 		l.input_gate,
 		l.output_gate,
@@ -87,8 +87,8 @@ function Σ∇clear!(l::LSTM)
 end
 
 # update average gradient
-function Σ∇update!(l::LSTM, data_len::Int)
-	Σ∇update!.([
+function avg∇update!(l::LSTM, data_len::Int)
+	avg∇update!.([
 		l.forget_gate,
 		l.input_gate,
 		l.output_gate,
@@ -98,8 +98,8 @@ function Σ∇update!(l::LSTM, data_len::Int)
 end
 
 # apply average gradient
-function Σ∇apply!(l::LSTM, η::Float64)
-	Σ∇apply!.([
+function avg∇apply!(l::LSTM, η::Float64)
+	avg∇apply!.([
 		l.forget_gate,
 		l.input_gate,
 		l.output_gate,

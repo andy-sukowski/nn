@@ -22,7 +22,7 @@ tanh′(x) = 1 - tanh(x)^2
 # alternatively, use Iterators.product():
 cart = collect ∘ Iterators.product
 
-function one_hot(d::Int, n::Int)::Vector{Int}
+function one_hot(n::Int, d::Int)::Vector{Int}
 	out = zeros(n)
 	out[d] = 1
 	return out

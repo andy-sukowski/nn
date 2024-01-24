@@ -13,9 +13,9 @@ include("layers/lstm.jl")
 include("layers/pool.jl")
 
 # needed for Conv and Dense layers
-Σ∇clear!(_::Layer) = nothing
-Σ∇update!(_::Layer, _::Int) = nothing
-Σ∇apply!(_::Layer, _::Float64) = nothing
+avg∇clear!(_::Layer) = nothing
+avg∇update!(_::Layer, _::Int) = nothing
+avg∇apply!(_::Layer, _::Float64) = nothing
 
 loss(x, y)  = sum((x - y) .^ 2)
 loss′(x, y) = 2 .* (x - y)
@@ -46,38 +46,38 @@ end
 
 # data: [(input, expected)], only one batch!
 function train!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64)::Float64
-	Σ∇clear!.(layers)
+	avg∇clear!.(layers)
 
-	Σloss = 0
+	avg_loss = 0
 	for d in data
 		output = forward!(layers, d[1])
-		Σloss += loss(output, d[2]) / length(data)
+		avg_loss += loss(output, d[2]) / length(data)
 		backprop!(layers, loss′(output, d[2]))
 
-		Σ∇update!.(layers, length(data))
+		avg∇update!.(layers, length(data))
 	end
 
 	# play around with learning rate η
-	Σ∇apply!.(layers, η)
+	avg∇apply!.(layers, η)
 
-	return Σloss
+	return avg_loss
 end
 
 # sequential data: [(input_seq, expected_seq)], only one batch!
 function train_seq!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64)::Float64
-	Σ∇clear!.(layers)
+	avg∇clear!.(layers)
 
-	Σloss = 0
+	avg_loss = 0
 	for d in data
 		output = forward_seq!(layers, d[1])
-		Σloss += sum(loss.(output, d[2])) / length(data)
+		avg_loss += sum(loss.(output, d[2])) / length(data)
 		backprop_seq!(layers, loss′.(output, d[2]))
 
-		Σ∇update!.(layers, length(data))
+		avg∇update!.(layers, length(data))
 	end
 
 	# play around with learning rate η
-	Σ∇apply!.(layers, η)
+	avg∇apply!.(layers, η)
 
-	return Σloss
+	return avg_loss
 end

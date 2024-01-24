@@ -4,24 +4,24 @@ import DSP # hopefully just temporary
 
 # convolutional layer with BPTT support: kernels, biases, gradient
 mutable struct Conv{N} <: Layer
-	act      ::Function
-	act′     ::Function
+	act        ::Function
+	act′       ::Function
 
-	input    ::Vector{Vector{Array{Float64, N}}} # BPTT
-	kernels  ::Matrix{Array{Float64, N}}
-	biases   ::Vector{Array{Float64, N}}
-	z_maps   ::Vector{Vector{Array{Float64, N}}} # BPTT
+	input      ::Vector{Vector{Array{Float64, N}}} # BPTT
+	kernels    ::Matrix{Array{Float64, N}}
+	biases     ::Vector{Array{Float64, N}}
+	z_maps     ::Vector{Vector{Array{Float64, N}}} # BPTT
 
-	∇kernels ::Vector{Matrix{Array{Float64, N}}} # BPTT
-	∇biases  ::Vector{Vector{Array{Float64, N}}} # BPTT
+	∇kernels   ::Vector{Matrix{Array{Float64, N}}} # BPTT
+	∇biases    ::Vector{Vector{Array{Float64, N}}} # BPTT
 
-	Σ∇kernels::Matrix{Array{Float64, N}}
-	Σ∇biases ::Vector{Array{Float64, N}}
+	avg∇kernels::Matrix{Array{Float64, N}}
+	avg∇biases ::Vector{Array{Float64, N}}
 end
 
 function Conv(dims::Pair{Int, Int}, input_size::NTuple{N, Int}, kernel_size::NTuple{N, Int}; act=σ, act′=σ′, t=1::Int)::Conv where {N}
 	output_size = input_size .- kernel_size .+ 1
-	Conv{N}(
+	return Conv{N}(
 		act,
 		act′,
 		[[Array{Float64}(undef, input_size...) for _ in 1:dims[1]] for _ in 1:t],
@@ -97,21 +97,22 @@ function backprop!(l::Conv, ∇output::Vector{<:Array{Float64}}; t=1::Int)::Vect
 end
 
 # clear average gradient
-function Σ∇clear!(l::Conv)
-	fill!.(l.Σ∇kernels, 0)
-	fill!.(l.Σ∇biases, 0)
+function avg∇clear!(l::Conv)
+	fill!.(l.avg∇kernels, 0)
+	fill!.(l.avg∇biases, 0)
+	return nothing
 end
 
 # update average gradient
-function Σ∇update!(l::Conv, data_len::Int)
-	l.Σ∇kernels += sum(l.∇kernels) / data_len
-	l.Σ∇biases  += sum(l.∇biases)  / data_len
+function avg∇update!(l::Conv, data_len::Int)
+	l.avg∇kernels += sum(l.∇kernels) / data_len
+	l.avg∇biases  += sum(l.∇biases)  / data_len
 	return nothing
 end
 
 # apply average gradient
-function Σ∇apply!(l::Conv, η::Float64)
-	l.kernels -= η * l.Σ∇kernels
-	l.biases  -= η * l.Σ∇biases
+function avg∇apply!(l::Conv, η::Float64)
+	l.kernels -= η * l.avg∇kernels
+	l.biases  -= η * l.avg∇biases
 	return nothing
 end
