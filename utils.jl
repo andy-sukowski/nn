@@ -16,6 +16,14 @@ lrelu′(x) = x < 0 ? 0.01 : 1
 tanh(x)  = (exp(x) - exp(-x)) / (exp(x) + exp(-x))
 tanh′(x) = 1 - tanh(x)^2
 
+# mean squared error
+mse(x, y)  = sum((x - y) .^ 2) / length(x)
+mse′(x, y) = 2 .* (x - y) / length(x)
+
+# multi-class cross-entropy
+xent(x, y)  = -sum(y .* log.(x .+ 1e-8))
+xent′(x, y) = -y ./ (x .+ 1e-8)
+
 # recursive n-fold Cartesian product
 # cart(x) = Tuple.(x) # base case
 # cart(xs...) = [(i, j...) for i in xs[1], j in cart(xs[2:end]...)]

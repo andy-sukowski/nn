@@ -11,14 +11,12 @@ include("layers/dense.jl")
 include("layers/flatten.jl")
 include("layers/lstm.jl")
 include("layers/pool.jl")
+include("layers/softmax.jl")
 
 # needed for Conv and Dense layers
 avg∇clear!(_::Layer) = nothing
 avg∇update!(_::Layer, _::Int) = nothing
 avg∇apply!(_::Layer, _::Float64) = nothing
-
-loss(x, y)  = sum((x - y) .^ 2)
-loss′(x, y) = 2 .* (x - y)
 
 function forward!(layers::Vector{<:Layer}, input::Vector; t=1::Int)::Vector
 	return foldl((inp, l) -> forward!(l, inp; t=t), [input, layers...])
@@ -45,7 +43,7 @@ function backprop_seq!(layers::Vector{<:Layer}, ∇out_seq::Vector{<:Vector})::V
 end
 
 # data: [(input, expected)], only one batch!
-function train!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64)::Float64
+function train!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64, loss=mse, loss′=mse′)::Float64
 	avg∇clear!.(layers)
 
 	avg_loss = 0
@@ -58,13 +56,13 @@ function train!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64)::Float64
 	end
 
 	# play around with learning rate η
-	avg∇apply!.(layers, η)
+	avg∇apply!.(layers, η * length(data))
 
 	return avg_loss
 end
 
 # sequential data: [(input_seq, expected_seq)], only one batch!
-function train_seq!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64)::Float64
+function train_seq!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64, loss=mse, loss′=mse′)::Float64
 	avg∇clear!.(layers)
 
 	avg_loss = 0
@@ -77,7 +75,7 @@ function train_seq!(layers::Vector{<:Layer}, data::Data; η=1.0::Float64)::Float
 	end
 
 	# play around with learning rate η
-	avg∇apply!.(layers, η)
+	avg∇apply!.(layers, η * length(data))
 
 	return avg_loss
 end
