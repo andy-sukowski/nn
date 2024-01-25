@@ -22,7 +22,7 @@ function backprop(l::Flatten, ∇output::Vector{Float64})::Vector{Array{Float64}
 	end
 
 	a = reshape(∇output', l.len, l.input_size...)
-	return [copy.(eachslice(a, dims=1))...]
+	return eachslice(a, dims=1)
 end
 
 # for multiple dispatch, no side-effects, but named forward!(), backprop!() for consistency

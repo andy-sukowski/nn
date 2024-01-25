@@ -20,7 +20,7 @@ tanh′(x) = 1 - tanh(x)^2
 # cart(x) = Tuple.(x) # base case
 # cart(xs...) = [(i, j...) for i in xs[1], j in cart(xs[2:end]...)]
 # alternatively, use Iterators.product():
-cart = collect ∘ Iterators.product
+cart = Iterators.product
 
 function one_hot(n::Int, d::Int)::Vector{Int}
 	out = zeros(n)
